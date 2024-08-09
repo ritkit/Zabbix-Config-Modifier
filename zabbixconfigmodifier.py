@@ -7,7 +7,6 @@ from ruamel.yaml import YAML
 
 # Create the YAML loader/dumper for use in the class.
 yaml = YAML(pure=True)
-
 # These set the various variables in ruamel, to closely duplicate format zabbix follows.
 yaml.preserve_quotes = True
 yaml.allow_duplicate_keys = True
@@ -31,7 +30,7 @@ class YamlPath(list):
 
             args[0].removeprefix("[")
             args[0].removesuffix("]")
-            super().__init__([x for x in YamlPath.text_to_YamlPath(args[0])])
+            super().__init__([x for x in YamlPath.text_to_yamlpath(args[0])])
 
         else:
             super().__init__(self, *args, **kw)
@@ -70,7 +69,7 @@ class YamlPath(list):
         return True
 
     @staticmethod
-    def text_to_YamlPath(yaml_path_as_text: str) -> 'YamlPath':
+    def text_to_yamlpath(yaml_path_as_text: str) -> 'YamlPath':
         """
         Convert provided path string to a usable path object.
         Makes path items that are exclusively numeric into integers for referencing lists.
@@ -210,7 +209,7 @@ class ZabbixConfigWorker:
                     help='Input Filename for Zabbix YAML Template file')
 
         self.__subparsers = parser.add_subparsers(title='Subcommands', description="Various \
-                                            functions of the zabbix config modifier", 
+                                            functions of the zabbix config modifier",
                                             required=True)
 
         self.__find_parser()
@@ -268,8 +267,8 @@ class ZabbixConfigWorker:
         self.zabconfig.write()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Accomplish various tasks including updating a \
+    parse = argparse.ArgumentParser(description='Accomplish various tasks including updating a \
                                     specific key, find a yaml path, or grab a specific section \
                                     of config.')
 
-    worker = ZabbixConfigWorker(parser)
+    worker = ZabbixConfigWorker(parse)
