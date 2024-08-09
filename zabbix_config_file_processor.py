@@ -2,6 +2,7 @@
 
 """Utilizes a alternative version of PyYAML, called ruamel.yaml"""
 import argparse
+import re
 from io import StringIO
 from ruamel.yaml import YAML
 
@@ -91,7 +92,7 @@ class YamlPath(list):
 
         return new_yamlpath
 
-class ZabbixConfigFile:
+class ConfigFile:
     """
     This class manages reading, and writing the a Zabbix YAML Config File. 
     All other classes can inherit it and the config stream created may be modified as needed.
@@ -108,7 +109,7 @@ class ZabbixConfigFile:
     def __str__(self) -> str:
         return self.return_formattted_stream()
 
-    def value_at_path(self, path: YamlPath) -> any:
+    def stream_at_path(self, path: YamlPath) -> any:
         target_stream = self._config_stream
         for path_item in path:
             target_stream = target_stream[path_item]
@@ -157,10 +158,13 @@ class ZabbixConfigFile:
         Will return a list of all YAML paths to a specified key, tag, or value at or 
         below a certain path.
         
+        All search values support regex matching.
+
         Optional_arguments:
         stream - provide a shortened stream or stream to continue search
         current_path - the path to get to where the stream is provided
         """
+
         if stream is None:
             stream = self._config_stream
 
@@ -171,8 +175,8 @@ class ZabbixConfigFile:
                 path = current_path.copy()
                 path.append(key)
 
-                if (key == search_key or search_key is None) \
-                and (value == search_value or search_value is None):
+                if (search_key is None or re.match(search_key, key) is not None ) \
+                and (search_value is None or re.match(search_value, value) is not None):
                     path_list.append(path)
 
                 if isinstance(value, (dict,list)):
@@ -186,8 +190,8 @@ class ZabbixConfigFile:
                 path = current_path.copy()
                 path.append(i)
 
-                if (str(i) == search_key or search_key is None) \
-                and (value == search_value or search_value is None):
+                if (search_key is None or re.match(search_key, str(i)) is not None) \
+                and (search_value is None or re.match(search_value, value) is not None):
                     path_list.append(path)
 
                 if isinstance(value, (dict,list)):
@@ -224,16 +228,16 @@ class ZabbixConfigWorker:
                         be added in combination with each other. \nIf multiple args provided, \
                         search will be an \"AND\" of all terms ")
         find_parser.set_defaults(func=self.__find)
-        find_parser.add_argument('-k', '--key', dest='key', nargs='?')
+        find_parser.add_argument('-k', '--key', dest='key', nargs='?', help="Match with regex")
         #find_parser.add_argument('-t', '--tag', dest='tag', nargs=1)
-        find_parser.add_argument('-v', '--value', dest='value', nargs='?')
+        find_parser.add_argument('-v', '--value', dest='value', nargs='?', help="Match with regex")
 
         find_parser.add_argument('outfile', nargs='?', type=str, help="Output list of paths to \
                                  file, instead of stdout")
 
     def __find(self) -> None:
 
-        self.zabconfig = ZabbixConfigFile(infile=self.__args.infile)
+        self.zabconfig = ConfigFile(infile=self.__args.infile)
 
         path_list = self.zabconfig.find_path(search_key=self.__args.key, \
                                             search_value=self.__args.value)
@@ -253,14 +257,14 @@ class ZabbixConfigWorker:
                                 path location")
 
         update_item_sp.set_defaults(func=self.__update)
-        update_item_sp.add_argument('-p', '--path', dest='path')
+        update_item_sp.add_argument('-p', '--path', dest='path', help='<yaml.path.style>')
         update_item_sp.add_argument('-v', '--value', dest='value')
 
         update_item_sp.add_argument('outfile', nargs='?', type=str, help="Output new zabbix config \
                                     with changes.")
 
     def __update(self) -> None:
-        self.zabconfig = ZabbixConfigFile(infile=self.__args.infile, outfile=self.__args.outfile)
+        self.zabconfig = ConfigFile(infile=self.__args.infile, outfile=self.__args.outfile)
         ypath = YamlPath(self.__args.path)
 
         self.zabconfig.update_item(ypath, self.__args.value)

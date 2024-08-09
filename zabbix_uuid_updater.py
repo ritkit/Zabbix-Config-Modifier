@@ -8,7 +8,7 @@ Modules Utilized
 """
 from uuid import uuid4 as uuid
 import argparse
-from zabbixconfigmodifier import ZabbixConfigFile
+from zabbix_config_file_processor import ConfigFile
 
 class ZabbixUUIDUpdater:
     """
@@ -21,7 +21,7 @@ class ZabbixUUIDUpdater:
     Clear - Deletes all UUIDs and sets them to be "blank".
     """
     def __init__(self, infile: str, outfile: str = None) -> None:
-        self.zabbix_config_file = ZabbixConfigFile(infile, outfile)
+        self.zabbix_config_file = ConfigFile(infile, outfile)
 
     @staticmethod
     def _uuid_generator() -> str:
@@ -29,7 +29,7 @@ class ZabbixUUIDUpdater:
         return "".join([x for x in new_uuid if x != '-'])
 
     def update_uuid(self, update: bool = False, clear: bool = False):
-        all_uuid_paths = self.zabbix_config_file.find_path(search_key="uuid")
+        all_uuid_paths = self.zabbix_config_file.find_path(search_key="^uuid$")
 
         if update is True:
             for path_item in all_uuid_paths:
@@ -41,7 +41,7 @@ class ZabbixUUIDUpdater:
 
         else:
             for path_item in all_uuid_paths:
-                path_value = self.zabbix_config_file.value_at_path(path_item)
+                path_value = self.zabbix_config_file.stream_at_path(path_item)
                 if(path_value is None or path_value == ''):
                     self.zabbix_config_file.update_item(path_item, self._uuid_generator())
 
