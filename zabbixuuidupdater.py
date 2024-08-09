@@ -8,8 +8,7 @@ Modules Utilized
 """
 from uuid import uuid4 as uuid
 import argparse
-from zabbixconfigmodifier import ZabbixConfigFile, YamlPath
-
+from zabbixconfigmodifier import ZabbixConfigFile
 
 class ZabbixUUIDUpdater:
     """
